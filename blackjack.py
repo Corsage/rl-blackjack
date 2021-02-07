@@ -1,24 +1,27 @@
-#Use for card shuffle
+# blackjack.py
+
 import random
 
-#Boolean used to know if hand is in play
+# Boolean used to know if hand is in play.
 playing = False
 
-chip_pool = 100
-bet = 1
+# ---- Betting (Remove) ----
+# chip_pool = 100
+# bet = 1
+
 restart_phrase = "Press 'd' to deal the cards again, or press 'q' to quit"
 
-#Hearts, Diamonds, Clubs, Spade
+# Hearts, Diamonds, Clubs, Spade.
 suits = ('H', 'D', 'C', 'S')
 
-#Possible card ranks
-ranking = ('A', '2', '3', '4','5', '6', '7', '8', '9', '10', 'J', 'K')
+# Possible card ranks.
+ranking = ('A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K')
 
-#Point values dict 
+# Point values dict.
 card_val = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10 }
 
 
-#Card Class
+# Card Class.
 class Card:
     def __init__(self, suit, rank):
         self.suit = suit
@@ -59,7 +62,7 @@ class Hand:
         '''Adds another card to the hand'''
         self.cards.append(card)
         
-        #Check for aces
+        # Check for aces.
         if card.rank == 'A':
             self.rank = True
         self.value += card_val[card.rank]
@@ -72,16 +75,17 @@ class Hand:
         
         def draw(self, hidden):
             if hidden == True and playing == True:
-                #Don't show first hidden card
+                # Don't show first hidden card.
                 starting_card = 1
             else: 
                 starting_card = 0
             for x in range(starting_card, len(self.cards)):
                 self.cards[x].draw()
                 
-#Deck Class
+# Deck Class.
 class Deck: 
     def __init__(self):
+        # --- Creates only 1 deck. ---
         '''Creates a deck in order'''
         self.deck = []
         for suit in suits: 
@@ -103,43 +107,45 @@ class Deck:
             deck_comp += " " + deck_comp.__str__()
             
         return "The deck has" + deck_comp
-    
-#First Bet
-def make_bet():
-    '''Asks the player for the bet amount and '''
-    
-    global bet
-    bet = 0
-    
-    print ' What amount of chips would you like to bet? (Enter whole integer please) '
-    
-    #While loop to keep asking for the bet
-    while bet == 0:
-        bet_comp = raw_input() #Use bet_comp as a checker 
-        bet_comp = int(bet_comp)
-        #Check to make sure the bet is within the remaining amount of chips left
-        if bet_comp >= 1 and bet_comp <= chip_pool:
-            bet = bet_comp
-        else: 
-            print("Invalid bet, you only have " + str(chip_pool) + " remaining")
+
+# ---- Betting (Remove) ---- 
+# First Bet
+# def make_bet():
+#    '''Asks the player for the bet amount and '''
+#    
+#    global bet
+#    bet = 0
+#    
+#    print ' What amount of chips would you like to bet? (Enter whole integer please) '
+#    
+#    #While loop to keep asking for the bet
+#    while bet == 0:
+#        bet_comp = raw_input() #Use bet_comp as a checker 
+#        bet_comp = int(bet_comp)
+#        #Check to make sure the bet is within the remaining amount of chips left
+#        if bet_comp >= 1 and bet_comp <= chip_pool:
+#            bet = bet_comp
+#        else: 
+#            print("Invalid bet, you only have " + str(chip_pool) + " remaining")
             
 def deal_cards():
     '''This function deals out cards and sets up round''' 
-    #Set up all global variables
+    # Set up all global variables.
     global result,playing,deck,player_hand,dealer_hand,chip_pool,bet
     
-    #Create a deck
+    # Create a deck.
     deck = Deck()
-    #Shuffle it
+    # Shuffle it.
     deck.shuffle()
-    #Set up bet
-    make_bet()
+    # ---- Betting (Remove) ---- 
+    # Set up bet.
+    # make_bet()
             
-    #Set up both player and dealer hands
+    # Set up both player and dealer hands.
     player_hand = Hand()
     dealer_hand = Hand()
     
-    #Deal out initial cards 
+    # Deal out initial cards.
     player_hand.card_add(deck.deal())
     player_hand.card_add(deck.deal())
     
@@ -150,9 +156,10 @@ def deal_cards():
     
     if playing == True:
         print('Fold, Sorry')
-        chip_pool -= bet
+        # ---- Betting (Remove) ---- 
+        # chip_pool -= bet
         
-    #Set up to know currently playing hand
+    # Set up to know currently playing hand.
     playing = True
     game_step()
     
@@ -160,7 +167,7 @@ def hit():
     '''Impliment the hit button'''
     global playing,chip_pool,deck,player_hand,dealer_hand,result,bet
     
-    #If hand is in play add card
+    # If hand is in play add card.
     if playing: 
         if player_hand.calc_val() <= 21:
             player_hand.card_add(deck.deal())
@@ -170,7 +177,8 @@ def hit():
         if player_hand.calc_val() > 21:
             result = "Busted! " + restart_phrase
             
-            chip_pool -= bet
+            # ---- Betting (Remove) ---- 
+            # chip_pool -= bet
             playing = False
             
         else:
@@ -186,9 +194,9 @@ def stand():
         if player_hand.calc_val() > 0:
             result = "Sorry, you can't stand!"
             
-    #Now go through all the other possible options
+    # Now go through all the other possible options.
     else:
-        #Soft 17 rule
+        # Soft 17 rule.
         while dealer_hand.calc_val() > 0:
             result = "Sorry, you can't stand!"
             
@@ -196,12 +204,14 @@ def stand():
             
             if dealer_hand.calc_val() > 21:
                 result = 'Dealer busts! You win!' + restart_phrase
-                chip_pool += bet
+                # ---- Betting (Remove) ---- 
+                # chip_pool += bet
                 playing = False
                 
             elif dealer_hand.calc_val() < player_hand.calc_val():
                 result = 'You beat the dealer, you win!' + restart_phrase
-                chip_pool += bet
+                # ---- Betting (Remove) ---- 
+                # chip_pool += bet
                 playing = False
                 
             elif dealer_hand.calc_val() == player_hand.calc_val():
@@ -210,7 +220,8 @@ def stand():
                 
             else:
                 result = 'Dealer Wins!' + restart_phrase
-                chip_pool -= bet
+                # ---- Betting (Remove) ---- 
+                # chip_pool -= bet
                 playing = False
     
     game_step() 
@@ -218,24 +229,26 @@ def stand():
         
 def game_step(): 
     '''Function that prints game status of output'''
-    #Displays the player's hand
+    # Displays the player's hand.
     print '' 
     print('Player Hand is: '),
     player_hand.draw(hidden = False)
     
     print('Player hand total is: ' + str(player_hand.calc_val()))
     
-    #Displays the dealer's hand
+    # Displays the dealer's hand.
     print('The Dealer Hand is: '), dealer_hand.draw(hidden = True)
     
-    #If game round is over
+    # If game round is over.
     if playing == False:
         print("--- for a total of " + str(dealer_hand.calc_val()))
-        print "Chip Total: " + str(chip_pool)
-    #Otherwise, don't know the second card yet
+        # ---- Betting (Remove) ---- 
+        # print "Chip Total: " + str(chip_pool)
+
+    # Otherwise, don't know the second card yet.
     else:
         print "with another card hidden upside dowm" 
-    #Print result of hit or stand.
+    # Print result of hit or stand.
     print result
     
     player_input()
@@ -277,5 +290,5 @@ player_hand = Hand()
 dealer_hand = Hand()
 
 intro()
-deal_cards()       
+deal_cards()
         
