@@ -67,20 +67,20 @@ class Hand:
             self.rank = True
         self.value += card_val[card.rank]
         
-        def calc_val(self):
-            '''Calculates the value of the hand, makes aces an 11 if they don't bust the hand'''
-            if (self.ace == True and self.value < 12):
-                return self.value + 10
-            return self.value
-        
-        def draw(self, hidden):
-            if hidden == True and playing == True:
-                # Don't show first hidden card.
-                starting_card = 1
-            else: 
-                starting_card = 0
-            for x in range(starting_card, len(self.cards)):
-                self.cards[x].draw()
+    def calc_val(self):
+        '''Calculates the value of the hand, makes aces an 11 if they don't bust the hand'''
+        if (self.ace == True and self.value < 12):
+            return self.value + 10
+        return self.value
+    
+    def draw(self, hidden):
+        if hidden == True and playing == True:
+            # Don't show first hidden card.
+            starting_card = 1
+        else: 
+            starting_card = 0
+        for x in range(starting_card, len(self.cards)):
+            self.cards[x].draw()
                 
 # Deck Class.
 class Deck: 
@@ -120,7 +120,7 @@ class Deck:
 #    
 #    #While loop to keep asking for the bet
 #    while bet == 0:
-#        bet_comp = raw_input() #Use bet_comp as a checker 
+#        bet_comp = input() #Use bet_comp as a checker 
 #        bet_comp = int(bet_comp)
 #        #Check to make sure the bet is within the remaining amount of chips left
 #        if bet_comp >= 1 and bet_comp <= chip_pool:
@@ -133,6 +133,7 @@ def deal_cards():
     # Set up all global variables.
     global result,playing,deck,player_hand,dealer_hand,chip_pool,bet
     
+    # ---- Every game creates a new deck and shuffles it. ----
     # Create a deck.
     deck = Deck()
     # Shuffle it.
@@ -172,7 +173,7 @@ def hit():
         if player_hand.calc_val() <= 21:
             player_hand.card_add(deck.deal())
             
-        print "Player hand is %s" %player_hand
+        print("Player hand is", player_hand)
         
         if player_hand.calc_val() > 21:
             result = "Busted! " + restart_phrase
@@ -180,9 +181,10 @@ def hit():
             # ---- Betting (Remove) ---- 
             # chip_pool -= bet
             playing = False
-            
-        else:
-            result = "Sorry, can't hit" + restart_phrase
+        
+        # ????
+        # else:
+            # result = "Sorry, can't hit" + restart_phrase
             
         game_step()
             
@@ -230,7 +232,7 @@ def stand():
 def game_step(): 
     '''Function that prints game status of output'''
     # Displays the player's hand.
-    print '' 
+    print(''); 
     print('Player Hand is: '),
     player_hand.draw(hidden = False)
     
@@ -247,20 +249,21 @@ def game_step():
 
     # Otherwise, don't know the second card yet.
     else:
-        print "with another card hidden upside dowm" 
+        print("with another card hidden upside down") 
     # Print result of hit or stand.
-    print result
+    print(result)
     
     player_input()
     
     
 def game_exit():
-    print "Thanks for playing!"
+    print("Thanks for playing!")
     exit()
     
 def player_input():
     '''Reads user input, lower case it just to be safe'''
-    plin = raw_input().lower()
+    plin = str(input()).lower()
+    print(plin)
     
     if plin == 'h':
         hit()
@@ -271,14 +274,14 @@ def player_input():
     elif plin == 'q':
         game_exit()
     else: 
-        print "Invalid Input...Enter h,s,d, or q: "
+        print("Invalid Input...Enter h,s,d, or q: ")
         player_input()
         
 def intro():
     statement = '''Welcome to BlackJack! Get as close to 21 as you can without going over!
     Dealer hits until she reaches 17. Aces count as 1 or 11.
     Card output goes a letter followed by a number of face notation'''
-    print statement
+    print(statement)
         
         
         
