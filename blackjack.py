@@ -40,7 +40,7 @@ class Card:
         print(self.suit + self.rank)
         
         
-#Hand Class       
+# Hand Class. 
 class Hand:
     def __init__(self):
         self.cards = []
@@ -199,34 +199,34 @@ def stand():
     # Now go through all the other possible options.
     else:
         # Soft 17 rule.
-        while dealer_hand.calc_val() > 0:
-            result = "Sorry, you can't stand!"
+        # while dealer_hand.calc_val() > 0:
+        #    result = "Sorry, you can't stand!"
+            
+        # else:
+            
+        if dealer_hand.calc_val() > 21:
+            result = 'Dealer busts! You win!' + restart_phrase
+            # ---- Betting (Remove) ---- 
+            # chip_pool += bet
+            playing = False
+            
+        elif dealer_hand.calc_val() < player_hand.calc_val():
+            result = 'You beat the dealer, you win!' + restart_phrase
+            # ---- Betting (Remove) ---- 
+            # chip_pool += bet
+            playing = False
+            
+        elif dealer_hand.calc_val() == player_hand.calc_val():
+            result = 'Tied up, push!' + restart_phrase
+            playing = False
             
         else:
-            
-            if dealer_hand.calc_val() > 21:
-                result = 'Dealer busts! You win!' + restart_phrase
-                # ---- Betting (Remove) ---- 
-                # chip_pool += bet
-                playing = False
-                
-            elif dealer_hand.calc_val() < player_hand.calc_val():
-                result = 'You beat the dealer, you win!' + restart_phrase
-                # ---- Betting (Remove) ---- 
-                # chip_pool += bet
-                playing = False
-                
-            elif dealer_hand.calc_val() == player_hand.calc_val():
-                result = 'Tied up, push!' + restart_phrase
-                playing = False
-                
-            else:
-                result = 'Dealer Wins!' + restart_phrase
-                # ---- Betting (Remove) ---- 
-                # chip_pool -= bet
-                playing = False
+            result = 'Dealer Wins!' + restart_phrase
+            # ---- Betting (Remove) ---- 
+            # chip_pool -= bet
+            playing = False
     
-    game_step() 
+    game_step()
           
         
 def game_step(): 
