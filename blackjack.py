@@ -1,297 +1,238 @@
-# blackjack.py
-
 import random
+from enum import Enum
 
-# Boolean used to know if hand is in play.
-playing = False
+# Set to True to see debug messages.
+DEBUGGING = True
 
-# ---- Betting (Remove) ----
-# chip_pool = 100
-# bet = 1
-
-restart_phrase = "Press 'd' to deal the cards again, or press 'q' to quit"
-
-# Hearts, Diamonds, Clubs, Spade.
-suits = ('H', 'D', 'C', 'S')
-
-# Possible card ranks.
-ranking = ('A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K')
-
-# Point values dict.
-card_val = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10 }
-
-
-# Card Class.
 class Card:
+    """ A basic card class for Blackjack. """
+
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
-        
+
     def __str__(self):
         return self.suit + self.rank
     
-    def grab_suit(self):
+    def get_suit(self):
         return self.suit
     
-    def grab_rank(self):
+    def get_rank(self):
         return self.rank
-    
-    def draw(self):
-        print(self.suit + self.rank)
-        
-        
-# Hand Class. 
-class Hand:
-    def __init__(self):
+
+    def get_value(self):
+        return Blackjack.VALUES[self.rank]
+
+class PlayerType(Enum):
+    """ A player can either be a dealer or a person. """
+    DEALER = "DEALER"
+    PERSON = "PERSON"
+
+class Player:
+    """ A basic player class for Blackjack. """
+
+    def __init__(self, playerType):
         self.cards = []
-        self.value = 0
-        # Since Aces could either be 1 or 11, we have to define that rule here
-        self.ace = False
-        
-    def __str__(self): 
-        '''Returns a string of current hand composition'''
-        hand_comp = "" 
-        
-        for card in self.cards:
-            card_name = card.__str__()
-            hand_comp += " " + card_name 
-            
-        return 'The hand has %s' %hand_comp
-    
-    def card_add(self, card): 
-        '''Adds another card to the hand'''
-        self.cards.append(card)
-        
-        # Check for aces.
-        if card.rank == 'A':
-            self.rank = True
-        self.value += card_val[card.rank]
-        
-    def calc_val(self):
-        '''Calculates the value of the hand, makes aces an 11 if they don't bust the hand'''
-        if (self.ace == True and self.value < 12):
-            return self.value + 10
-        return self.value
-    
-    def draw(self, hidden):
-        if hidden == True and playing == True:
-            # Don't show first hidden card.
-            starting_card = 1
-        else: 
-            starting_card = 0
-        for x in range(starting_card, len(self.cards)):
-            self.cards[x].draw()
-                
-# Deck Class.
-class Deck: 
-    def __init__(self):
-        # --- Creates only 1 deck. ---
-        '''Creates a deck in order'''
-        self.deck = []
-        for suit in suits: 
-            for rank in ranking: 
-                self.deck.append(Card(suit, rank))
-                
-    def shuffle(self): 
-        '''Shuffles the deck, without using Python's built-in method'''
-        random.shuffle(self.deck)
-        
-    def deal(self):
-        '''Grabs the first item from the deck'''
-        single_card = self.deck.pop()
-        return single_card
-    
+        self.playerType = playerType
+        self.score = 0
+
+        # Distinction between busting and stopping.
+        self.busted = False
+        self.stop = False
+
+        # For dealers.
+        self.hidden_card = self.playerType == PlayerType.DEALER
+
     def __str__(self):
-        deck_comp = "" 
-        for card in self.cards: 
-            deck_comp += " " + deck_comp.__str__()
-            
-        return "The deck has" + deck_comp
+        info = self.playerType.name + " score: " + str(self.score) + "\n"
+        hand = ""
+        for card in self.cards:
+            hand += str(card) + " "
 
-# ---- Betting (Remove) ---- 
-# First Bet
-# def make_bet():
-#    '''Asks the player for the bet amount and '''
-#    
-#    global bet
-#    bet = 0
-#    
-#    print ' What amount of chips would you like to bet? (Enter whole integer please) '
-#    
-#    #While loop to keep asking for the bet
-#    while bet == 0:
-#        bet_comp = input() #Use bet_comp as a checker 
-#        bet_comp = int(bet_comp)
-#        #Check to make sure the bet is within the remaining amount of chips left
-#        if bet_comp >= 1 and bet_comp <= chip_pool:
-#            bet = bet_comp
-#        else: 
-#            print("Invalid bet, you only have " + str(chip_pool) + " remaining")
-            
-def deal_cards():
-    '''This function deals out cards and sets up round''' 
-    # Set up all global variables.
-    global result,playing,deck,player_hand,dealer_hand,chip_pool,bet
-    
-    # ---- Every game creates a new deck and shuffles it. ----
-    # Create a deck.
-    deck = Deck()
-    # Shuffle it.
-    deck.shuffle()
-    # ---- Betting (Remove) ---- 
-    # Set up bet.
-    # make_bet()
-            
-    # Set up both player and dealer hands.
-    player_hand = Hand()
-    dealer_hand = Hand()
-    
-    # Deal out initial cards.
-    player_hand.card_add(deck.deal())
-    player_hand.card_add(deck.deal())
-    
-    dealer_hand.card_add(deck.deal())
-    dealer_hand.card_add(deck.deal())
-    
-    result = "Hit or Stand? Press either h or s: "
-    
-    if playing == True:
-        print('Fold, Sorry')
-        # ---- Betting (Remove) ---- 
-        # chip_pool -= bet
-        
-    # Set up to know currently playing hand.
-    playing = True
-    game_step()
-    
-def hit(): 
-    '''Impliment the hit button'''
-    global playing,chip_pool,deck,player_hand,dealer_hand,result,bet
-    
-    # If hand is in play add card.
-    if playing: 
-        if player_hand.calc_val() <= 21:
-            player_hand.card_add(deck.deal())
-            
-        print("Player hand is", player_hand)
-        
-        if player_hand.calc_val() > 21:
-            result = "Busted! " + restart_phrase
-            
-            # ---- Betting (Remove) ---- 
-            # chip_pool -= bet
-            playing = False
-        
-        # ????
-        # else:
-            # result = "Sorry, can't hit" + restart_phrase
-            
-        game_step()
-            
-def stand():
-    global playing,chip_pool,deck,player_hand,dealer_hand,result,bet
-    '''This function will now play the dealers hand, since stand was chosen'''
-    
-    if playing == False:
-        if player_hand.calc_val() > 0:
-            result = "Sorry, you can't stand!"
-            
-    # Now go through all the other possible options.
-    else:
-        # Soft 17 rule.
-        # while dealer_hand.calc_val() > 0:
-        #    result = "Sorry, you can't stand!"
-            
-        # else:
-            
-        if dealer_hand.calc_val() > 21:
-            result = 'Dealer busts! You win!' + restart_phrase
-            # ---- Betting (Remove) ---- 
-            # chip_pool += bet
-            playing = False
-            
-        elif dealer_hand.calc_val() < player_hand.calc_val():
-            result = 'You beat the dealer, you win!' + restart_phrase
-            # ---- Betting (Remove) ---- 
-            # chip_pool += bet
-            playing = False
-            
-        elif dealer_hand.calc_val() == player_hand.calc_val():
-            result = 'Tied up, push!' + restart_phrase
-            playing = False
-            
-        else:
-            result = 'Dealer Wins!' + restart_phrase
-            # ---- Betting (Remove) ---- 
-            # chip_pool -= bet
-            playing = False
-    
-    game_step()
-          
-        
-def game_step(): 
-    '''Function that prints game status of output'''
-    # Displays the player's hand.
-    print(''); 
-    print('Player Hand is: '),
-    player_hand.draw(hidden = False)
-    
-    print('Player hand total is: ' + str(player_hand.calc_val()))
-    
-    # Displays the dealer's hand.
-    print('The Dealer Hand is: '), dealer_hand.draw(hidden = True)
-    
-    # If game round is over.
-    if playing == False:
-        print("--- for a total of " + str(dealer_hand.calc_val()))
-        # ---- Betting (Remove) ---- 
-        # print "Chip Total: " + str(chip_pool)
+        hand += "SUM: " + str(self.sum_hand())
 
-    # Otherwise, don't know the second card yet.
-    else:
-        print("with another card hidden upside down") 
-    # Print result of hit or stand.
-    print(result)
-    
-    player_input()
-    
-    
-def game_exit():
-    print("Thanks for playing!")
-    exit()
-    
-def player_input():
-    '''Reads user input, lower case it just to be safe'''
-    plin = str(input()).lower()
-    print(plin)
-    
-    if plin == 'h':
-        hit()
-    elif plin == 's':
-        stand()
-    elif plin == 'd':
-        deal_cards()
-    elif plin == 'q':
-        game_exit()
-    else: 
-        print("Invalid Input...Enter h,s,d, or q: ")
-        player_input()
-        
-def intro():
-    statement = '''Welcome to BlackJack! Get as close to 21 as you can without going over!
-    Dealer hits until she reaches 17. Aces count as 1 or 11.
-    Card output goes a letter followed by a number of face notation'''
-    print(statement)
-        
-        
-        
-'''The following code will initiate the game.'''
-deck = Deck()
-deck.shuffle()
+        return info + hand
 
-player_hand = Hand()
-dealer_hand = Hand()
+    def add_to_score(self, num):
+        self.score += num
 
-intro()
-deal_cards()
+    def get_cards(self):
+        return self.cards
+
+    def did_bust(self):
+        return self.busted
+
+    def sum_hand(self):
+        hand = 0
+        has_ace = False
+
+        for card in self.cards:
+            value = card.get_value()
+
+            if value == 1:
+                has_ace = True
+
+            hand += value
+
+        # Check if ace as 11 helps.
+        if has_ace and (hand + 10) <= 21:
+            return hand + 10
         
+        return hand
+    
+    def ask(self):
+        if self.playerType == PlayerType.PERSON:
+            temp = str(input("Hit? (Y/N): "))
+
+            if temp == 'Y' or temp == 'y':
+                return True
+
+            self.stand()
+            return False
+
+        elif self.playerType == PlayerType.DEALER:
+            # Dealer must hit in certain conditions.
+            # If the total is 17 or more, it must stand.
+            # If the total is 16 or under, they must take a card.
+            # If the dealer has an ace, and counting it as 11
+            # would bring the total to 17 or more (but not over 21),
+            # the dealer must count the ace as 11 and stand.
+
+            if self.sum_hand() >= 17:
+                self.stand()
+                return False
+            else:
+                return True
+
+    def hit(self, card):
+        self.cards.append(card)
+
+        # Check if busted.
+        if self.sum_hand() > 21:
+            self.busted = True
+
+    def stand(self):
+        self.stop = True
+
+class Blackjack:
+    """ A Blackjack class that emulates the game. """
+
+    SUITS = ('H', 'D', 'C', 'S')
+    RANKINGS = ('A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K')
+    VALUES = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10 }
+
+    def __init__(self, decks = 1, players = 1, rounds = 1):
+        self.deck = []
+        self.history = []
+        self.players = []
+        self.rounds = rounds
+        self.decks = decks
+        self.dealer = Player(PlayerType.DEALER)
+
+        # Create x players.
+        for i in range(players):
+            self.players.append(Player(PlayerType.PERSON))
+
+    def shuffle(self):
+        random.shuffle(self.deck)
+
+    def get_history(self):
+        return self.history
+
+    def deal(self):
+        # Every time we deal a card, it goes into our history.
+        card = self.deck.pop()
+        self.history.append(card)
+        return card
+
+    def distribute_winnings(self):
+        # If both the player and the dealer have a tie—including
+        # with a blackjack—the bet is a tie or “push”.
+        # If both the dealer and player bust, the player loses.
+        for player in self.players:
+            if not(player.did_bust()):
+                if self.dealer.did_bust() or (player.sum_hand() > self.dealer.sum_hand()) :
+                    player.add_to_score(1)
+                    self.dealer.add_to_score(-1)
+
+                elif player.sum_hand() == self.dealer.sum_hand():
+                    player.add_to_score(0)
+                    self.dealer.add_to_score(0)
+
+                else:
+                    player.add_to_score(-1)
+                    self.dealer.add_to_score(1)
+            else:
+                player.add_to_score(-1)
+                self.dealer.add_to_score(1)
+
+
+    def start(self):
+        # Start the game.
+        # Note: We do NOT shuffle per game, only once per episode.
+
+        # Create x deck of cards into one.
+        for i in range(self.decks):
+            for suit in self.SUITS:
+                for rank in self.RANKINGS:
+                    self.deck.append(Card(suit, rank))
+
+        self.shuffle()
+
+        # Begin games.
+        for i in range(self.rounds):
+            if DEBUGGING:
+                print("BEGINNING GAME")
+                print("History:", *self.history)
+
+            # Each player is dealt two cards first.
+            for player in self.players:
+                player.hit(self.deal())
+                player.hit(self.deal())
+
+            if DEBUGGING:
+                print("Players are dealt cards.")
+
+            # Next, the dealer is dealt two cards.
+            self.dealer.hit(self.deal())
+            self.dealer.hit(self.deal())
+
+            if DEBUGGING:
+                print("Dealer is dealt cards.")
+
+            # Keep asking each player if they want to hit.
+            asking = True
+
+            while asking:
+                asking = False
+                if DEBUGGING:
+                    print("Asking players.")
+
+                for player in self.players:
+                    if player.ask():
+                        asking = True
+                        player.hit(self.deal())
+
+            # Once all players are done, dealer reveals their hidden card.
+            # Dealer then is asked to hit.
+
+            if DEBUGGING:
+                print("Asking dealer.")
+
+            while self.dealer.ask():
+                self.dealer.hit(self.deal())
+
+            # Once completed, we distribute winnings.
+            self.distribute_winnings()
+
+            if DEBUGGING:
+                for player in self.players:
+                    print(player)
+
+                print(self.dealer)
+
+if __name__ == "__main__":
+    game = Blackjack(rounds=5)
+    game.start()
+
+
