@@ -10,16 +10,24 @@ def state_to_ind(state):
     #    - the dealer's one showing card (1-10 where 1 is ace),
     #    - and whether or not the player holds a usable ace (0 or 1).   
     # state: [(players_sum),(shown_card),(usable_ace)]
-
+    # print(state)
     if state[0]<=11 or state[0]>21:
         return -1
 
     # linear indeces in 3d array shape
-    lin_inds = np.arange(10*10*2).reshape([10,10,2])
+    lin_inds = np.arange(10*10*2*3).reshape([10,10,2,3])
     x = state[0]-12
     y = state[1]-1
-    z = 1 if state[2]==False else 0 
-    return lin_inds[x,y,z]
+    z = 1 if state[2]==False else 0
+    # 0 - card count == 0
+    # 1 - card count is positive
+    # 2 - card count is negative
+    w = 0
+    if state[3] > 0:
+        w = 1
+    elif state[3] < 0:
+        w = 2
+    return lin_inds[x,y,z,w]
 
 def sample_action(policy, state):
     
@@ -183,22 +191,6 @@ def epsilon_greedy_policy_improve(Q_value, nS, nA, epsilon):
 
     return new_policy
 
-# def updateQ_policy(s_t1, policy, Q_value, epsilon):
-#     a_t1 = sample_action(policy, s_t1)
-#     s_t2, r_t1, done, _ = env.step(a_t1)
-
-#     if s_t2<=11:
-#         return Q_value, policy
-    
-#     s_t1_ind = state_to_ind(s_t1)
-#     s_t2_ind = state_to_ind(s_t2)
-#     Q_value[s_t1_ind, a_t1] += alpha*(r_t1 + gamma*np.max(Q_value[s_t2_ind]) - Q_value[s_t1_ind, a_t1])
-#     i += 1
-#     epsilon = epsilon/i
-#     policy = epsilon_greedy_policy_improve(Q_value, env.nS, env.nA, epsilon)
-
-#     return Q_value, policy 
-
 
 def mc_policy_evaluation(env, policy, Q_value, n_visits, gamma=0.9):
     """Update the current Q_values and n_visits by generating one random episode
@@ -276,9 +268,6 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
         policy = epsilon_greedy_policy_improve(Q_value, env.nS, env.nA, epsilon)
 
         if i >= iterations:
-            # save policy to continue training from this point
-            with open("mc_policy.pkl", "wb") as output_file:
-                pickle.dump(policy, output_file)
             break
 
     ############################
@@ -306,8 +295,6 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     det_policy: np.ndarray[env.nS]
         The greedy (i.e., deterministic policy)
     """
-    # states: [(player_sum, shown_card, usable_ace)]
-    # [(12-21),(1-10),(True,False)]
     if Q_value is None:
         Q_value = np.zeros((env.nS, env.nA))
     if policy is None:
@@ -320,7 +307,6 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     while True:
         a_t1 = sample_action(policy, s_t1)
         s_t2, r_t1, done, _ = env.step(a_t1)
-        # print('sard: ', s_t1, a_t1, r_t1, done)
         if s_t2[0]<=11:
             continue
         s_t2_ind = state_to_ind(s_t2)
@@ -334,18 +320,12 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
         s_t1_ind = s_t2_ind
 
         if done: # if episode ends update Q and reset our agent
-            a_t1 = sample_action(policy, s_t1)
             s_t2, r_t1, done, _ = env.step(a_t1)
             Q_value[s_t1_ind, a_t1] += alpha*(r_t1 + gamma*np.max(Q_value[s_t2_ind]) - Q_value[s_t1_ind, a_t1])
             s_t1 = env.reset()
             s_t1_ind = state_to_ind(s_t1)
      
         if i >= iterations:
-            # save policy to continue training from this point
-            with open("qlearn_policy.pkl", "wb") as output_file:
-                pickle.dump(policy, output_file)
-            with open("qlearn_qvalue.pkl", "wb") as output_file:
-                pickle.dump(Q_value, output_file)
             break
     
     ############################
@@ -389,8 +369,8 @@ def test_performance(env, policy, nb_episodes=500, max_steps=500):
                     loss+=1
                 break
     print("""\nSuccess rate over {} episodes:
-    wins = {:.2f}%\ndraws = {:.2f}%\nlosses = {:.2f}%\n
-    Average reward={:.2f}\n"""
+        wins = {:.2f}%\n\tdraws = {:.2f}%\n\tlosses = {:.2f}%\n
+        Average reward={:.2f}\n"""
     .format(nb_episodes,win/nb_episodes*100,draw/nb_episodes*100,loss/nb_episodes*100,res_reward/nb_episodes))
 
 
@@ -401,22 +381,10 @@ if __name__ == "__main__":
     nA = env.nA  # number of actions: hit or stand
     Q_value = np.zeros((env.nS, env.nA))
     policy = np.ones((env.nS,env.nA))/env.nA
-    state = env.get_obs()
 
-    ## Monte-Carlo
-    # with open("mc_policy.pkl", "rb") as input_file:
-    #     policy = pickle.load(input_file) # load saved policy
-    # print(policy)
-
-    # Q_mc, policy_mc = mc_glie(env, iterations=1000, gamma=0.9, policy=policy)
-    # print(policy_mc)
-    # test_performance(env, policy_mc)
-
-    # with open("mc_det_policy.pkl", "wb") as output_file:
-    #     pickle.dump(policy_mc, output_file)
-
-
-    Q_ql, policy_ql = qlearning(env, iterations=1000, gamma=0.9, alpha=0.1)
+    Q_ql, policy_ql = qlearning(env, iterations=10000, gamma=0.9, alpha=0.1)
     print(policy_ql)
     test_performance(env, policy_ql, nb_episodes=500, max_steps=500)
+
+    # https://youngho92.github.io/Fifth/
     

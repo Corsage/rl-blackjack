@@ -51,6 +51,11 @@ class Player:
         # For dealers.
         self.hidden_card = self.playerType == PlayerType.DEALER
 
+    def reset_hand(self):
+        self.cards = []
+        self.busted = False
+        self.stop = False
+
     def __str__(self):
         info = self.playerType.name + " score: " + str(self.score) + "\n"
         hand = ""
@@ -75,6 +80,7 @@ class Player:
             value = card.get_value()
             if value == 1:
                 return True
+        return False
 
     def sum_hand(self):
         hand = 0
@@ -93,30 +99,6 @@ class Player:
             return hand + 10
         
         return hand
-    
-    def ask(self):
-        if self.playerType == PlayerType.PERSON:
-            temp = str(input("Hit? (Y/N): "))
-
-            if temp == 'Y' or temp == 'y':
-                return True
-
-            self.stand()
-            return False
-
-        elif self.playerType == PlayerType.DEALER:
-            # Dealer must hit in certain conditions.
-            # If the total is 17 or more, it must stand.
-            # If the total is 16 or under, they must take a card.
-            # If the dealer has an ace, and counting it as 11
-            # would bring the total to 17 or more (but not over 21),
-            # the dealer must count the ace as 11 and stand.
-
-            if self.sum_hand() >= 17:
-                self.stand()
-                return False
-            else:
-                return True
 
     def hit(self, card):
         self.cards.append(card)
@@ -137,11 +119,24 @@ class Blackjack:
 
     def __init__(self, decks = 1, rounds = 1):
         self.nA = 2
-        self.nS = 10*10*2
+        self.nS = 10*10*2*3
         self.rounds = rounds
         self.decks = decks
+        self.card_count = 0
+        self.deck = []
+        self.history = []
 
-        self.reset()
+        self.player = Player(PlayerType.PERSON)
+        self.dealer = Player(PlayerType.DEALER)
+
+        # initialize the deck
+        for suit in self.SUITS:
+            for rank in self.RANKINGS:
+                self.deck.append(Card(suit, rank))
+        self.shuffle()
+        # print(len(self.deck))
+
+        # self.reset()
 
     def shuffle(self):
         random.shuffle(self.deck)
@@ -152,8 +147,48 @@ class Blackjack:
     def deal(self):
         # Every time we deal a card, it goes into our history.
         card = self.deck.pop()
+
+        # print(card)
+        # deck_print = []
+        # for card in self.deck:
+        #     deck_print.append(card.__str__())
+        # print(deck_print, len(self.deck))
+        # print('\n', self.player)
+        # print(self.dealer, '\n')
+
+        self.update_card_count(card)
         self.history.append(card)
+        if not self.deck: # to implement infinite deck
+            print('\n!!DECK EMPTY!!')
+            # reset history and count
+            self.history = []
+            self.card_count = 0
+            # initialize the deck
+            for suit in self.SUITS:
+                for rank in self.RANKINGS:
+                    self.deck.append(Card(suit, rank))
+            self.shuffle()
+        
         return card
+
+    def update_card_count(self, card):
+        card_value = card.get_value()
+        # hi-low card counting
+        # if 2 <= card_value <= 6:
+        #     self.card_count -= 1
+        # elif card_value == 10 or card_value == 1:
+        #     self.card_count += 1
+
+        # omega II card counting
+        if card_value in [2, 3, 7]:
+            self.card_count += 1
+        elif card_value in [4, 5, 6]:
+            self.card_count += 2
+        elif card_value == 9:
+            self.card_count -= 1
+        elif card_value == 10:
+            self.card_count -= 2
+        return
 
     def distribute_winnings(self):
         # If both the player and the dealer have a tie—including
@@ -183,13 +218,14 @@ class Blackjack:
         return reward
 
     def get_obs(self):
-        return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace())
+        return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace(), self.card_count)
     
     def step(self, a):
         reward = 0
         if a==1: # if action == 'hit'
             self.player.hit(self.deal())
             done = self.player.did_bust()
+            print('busted')
         else:   # action == 'stand'
             done = True
             self.player.stand()
@@ -201,17 +237,8 @@ class Blackjack:
         return self.get_obs(), reward, done, {}
 
     def reset(self):
-        
-        self.deck = []
-        self.history = []
-        self.player = Player(PlayerType.PERSON)
-        self.dealer = Player(PlayerType.DEALER)
-
-        # initialize the deck
-        for suit in self.SUITS:
-            for rank in self.RANKINGS:
-                self.deck.append(Card(suit, rank))
-        self.shuffle()
+        self.player.reset_hand()
+        self.dealer.reset_hand()
 
         # deal cards to player and dealer
         self.player.hit(self.deal())
