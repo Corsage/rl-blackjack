@@ -356,8 +356,8 @@ def test_performance(env, policy, nb_episodes=500, max_steps=500):
                     loss+=1
                 break
     print("""\nSuccess rate over {} episodes:
-    wins = {:.2f}%\ndraws = {:.2f}%\nlosses = {:.2f}%\n
-    Average reward={:.2f}\n"""
+        wins = {:.2f}%\n\tdraws = {:.2f}%\n\tlosses = {:.2f}%\n
+        Average reward={:.2f}\n"""
     .format(nb_episodes,win/nb_episodes*100,draw/nb_episodes*100,loss/nb_episodes*100,res_reward/nb_episodes))
 
 
@@ -370,6 +370,7 @@ if __name__ == "__main__":
     # print(policy_mc)
     # test_performance(env, policy_mc)
     
-    Q_ql, policy_ql = qlearning(env, iterations=100000, gamma=0.8, alpha=0.1)
+    # needs more iterations
+    Q_ql, policy_ql = qlearning(env, iterations=1000, gamma=0.2, alpha=0.1)
     print(policy_ql)
-    test_performance(env, policy_ql, nb_episodes=10000, max_steps=500)
+    test_performance(env, policy_ql, nb_episodes=1000, max_steps=500)

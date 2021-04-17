@@ -140,7 +140,7 @@ class Blackjack:
         self.history.append(card)
 
         if not self.deck: # to implement infinite deck
-            print('\n!!DECK EMPTY!!')
+            # print('\n!!DECK EMPTY!!')
             # reset history and count
             self.history = []
             self.card_count = 0
@@ -186,8 +186,6 @@ class Blackjack:
         if a==1: # if action == 'hit'
             self.player.hit(self.deal())
             done = self.player.did_bust()
-            if done:
-                print('busted')
         else:   # action == 'stand'
             done = True
             self.player.stand()

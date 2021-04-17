@@ -11,18 +11,18 @@ def state_to_ind(state):
     #    - and whether or not the player holds a usable ace (0 or 1).   
     # state: [(players_sum),(shown_card),(usable_ace)]
 
-    if state[1]<=11 or state[1]>21:
+    if state[0]<=11 or state[0]>21:
         return -1
 
     # linear indeces in 3d array shape
     lin_inds = np.arange(10*10*2*3).reshape([3,10,10,2])
-    x = state[1]-12
-    y = state[2]-1
-    z = 1 if state[3]==False else 0 
+    x = state[0]-12
+    y = state[1]-1
+    z = 1 if state[2]==False else 0 
     w = 0
-    if state[0] > 0:
+    if state[3] > 0:
         w = 1
-    elif state[0] < 0:
+    elif state[3] < 0:
         w = 2
     return lin_inds[w,x,y,z]
 
@@ -294,7 +294,6 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
         # print(policy.shape)
     epsilon = 1
     s_t1 = env.reset()  # reset the environment 
-    print(s_t1)
     s_t1_ind = state_to_ind(s_t1)
 
     i = 0
@@ -321,7 +320,6 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
      
         if i >= iterations:
             # save policy to continue training from this point
-            print(policy)
             with open("qlearn_policy_cardcount.pkl", "wb") as output_file:
                 pickle.dump(policy, output_file)
             with open("qlearn_qvalue_cardcount.pkl", "wb") as output_file:
@@ -368,29 +366,13 @@ def test_performance(env, policy, nb_episodes=500, max_steps=500):
                     loss+=1
                 break
     print("""\nSuccess rate over {} episodes:
-    wins = {:.2f}%\ndraws = {:.2f}%\nlosses = {:.2f}%\n
-    Average reward={:.2f}\n"""
+        wins = {:.2f}%\n\tdraws = {:.2f}%\n\tlosses = {:.2f}%\n
+        Average reward={:.2f}\n"""
     .format(nb_episodes,win/nb_episodes*100,draw/nb_episodes*100,loss/nb_episodes*100,res_reward/nb_episodes))
 
 
 if __name__ == "__main__":
     env = Blackjack()
-    # env = gym.make("Blackjack-v0")
-    nS = env.nS  # number of states for policy improvement
-    nA = env.nA  # number of actions: hit or stand
-
-    ## Monte-Carlo
-    # with open("mc_policy.pkl", "rb") as input_file:
-    #     policy = pickle.load(input_file) # load saved policy
-    # print(policy)
-
-    # Q_mc, policy_mc = mc_glie(env, iterations=1000, gamma=0.9)
-    # print(policy_mc)
-    # test_performance(env, policy_mc)
-
-    # with open("mc_det_policy.pkl", "wb") as output_file:
-    #     pickle.dump(policy_mc, output_file)
-
 
     with open("qlearn_policy.pkl", "rb") as input_file:
         policy = pickle.load(input_file) # load saved policy
@@ -398,7 +380,6 @@ if __name__ == "__main__":
     with open("qlearn_qvalue.pkl", "rb") as input_file:
         Q_value = pickle.load(input_file)
     
-    Q_ql, policy_ql = qlearning(env, iterations=10000, gamma=0.9, alpha=0.1, policy=policy, Q_value=Q_value)
-    print(policy)
-    print(policy_ql)
-    test_performance(env, policy_ql, nb_episodes=1000, max_steps=500)
+    # needs more iterations
+    Q_ql, policy_ql = qlearning(env, iterations=1000, gamma=0.5, alpha=0.1, policy=policy, Q_value=Q_value)
+    test_performance(env, policy_ql)
