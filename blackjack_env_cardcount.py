@@ -118,13 +118,12 @@ class Blackjack:
 
     def __init__(self, decks = 1, rounds = 1):
         self.nA = 2
-        self.nS = 10*10*2
-        # self.nS = 10*10*2*3
+        self.nS = 10*10*2*3
         self.rounds = rounds
         self.decks = decks
         self.deck = []
         self.history = []
-        # self.card_count = 0
+        self.card_count = 0
         self.player = Player(PlayerType.PERSON)
         self.dealer = Player(PlayerType.DEALER)
 
@@ -142,25 +141,25 @@ class Blackjack:
     def get_history(self):
         return self.history
 
-    # def update_card_count(self, card):
-    #     value = card.get_value()
+    def update_card_count(self, card):
+        value = card.get_value()
 
-    #     # hi-low card counting
-    #     # if 2 <= value <= 6: 
-    #     #     self.card_count +=1
-    #     # elif value in [1, 10]:
-    #     #     self.card_count +=1
+        # hi-low card counting
+        # if 2 <= value <= 6: 
+        #     self.card_count +=1
+        # elif value in [1, 10]:
+        #     self.card_count +=1
 
-    #     # omega-II card counting
-    #     if value in [2, 3, 7]:
-    #         self.card_count += 1
-    #     elif value in [4, 5, 6]:
-    #         self.card_count += 2
-    #     elif value == 9:
-    #         self.card_count -= 1
-    #     elif value == 10:
-    #         self.card_count -= 2
-    #     return
+        # omega-II card counting
+        if value in [2, 3, 7]:
+            self.card_count += 1
+        elif value in [4, 5, 6]:
+            self.card_count += 2
+        elif value == 9:
+            self.card_count -= 1
+        elif value == 10:
+            self.card_count -= 2
+        return
 
 
     def deal(self):
@@ -168,7 +167,7 @@ class Blackjack:
         
         card = self.deck.pop()
         self.history.append(card)
-        # self.update_card_count(card)
+        self.update_card_count(card)
 
         if not self.deck: # to implement infinite deck
             print('\n!!DECK EMPTY!!')
@@ -210,8 +209,7 @@ class Blackjack:
         return reward
 
     def get_obs(self):
-        return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace())
-        # return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace(), self.card_count)
+        return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace(), self.card_count)
     
     def step(self, a):
         reward = 0
