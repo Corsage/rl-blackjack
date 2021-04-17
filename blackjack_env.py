@@ -81,7 +81,6 @@ class Player:
             if value == 1:
                 return True
         return False
-
     def sum_hand(self):
         hand = 0
         has_ace = False
@@ -119,13 +118,11 @@ class Blackjack:
 
     def __init__(self, decks = 1, rounds = 1):
         self.nA = 2
-        self.nS = 10*10*2*3
+        self.nS = 10*10*2
         self.rounds = rounds
         self.decks = decks
-        self.card_count = 0
         self.deck = []
         self.history = []
-
         self.player = Player(PlayerType.PERSON)
         self.dealer = Player(PlayerType.DEALER)
 
@@ -135,7 +132,6 @@ class Blackjack:
                 self.deck.append(Card(suit, rank))
         self.shuffle()
         # print(len(self.deck))
-
         # self.reset()
 
     def shuffle(self):
@@ -146,18 +142,22 @@ class Blackjack:
 
     def deal(self):
         # Every time we deal a card, it goes into our history.
+        
         card = self.deck.pop()
+        self.history.append(card)
 
-        # print(card)
+        # print("DEAL:", card)
         # deck_print = []
+        # history_print = []
         # for card in self.deck:
         #     deck_print.append(card.__str__())
+        # for card in self.history:
+        #     history_print.append(card.__str__())
         # print(deck_print, len(self.deck))
+        # print(history_print, len(self.history))
         # print('\n', self.player)
         # print(self.dealer, '\n')
 
-        self.update_card_count(card)
-        self.history.append(card)
         if not self.deck: # to implement infinite deck
             print('\n!!DECK EMPTY!!')
             # reset history and count
@@ -168,27 +168,7 @@ class Blackjack:
                 for rank in self.RANKINGS:
                     self.deck.append(Card(suit, rank))
             self.shuffle()
-        
         return card
-
-    def update_card_count(self, card):
-        card_value = card.get_value()
-        # hi-low card counting
-        # if 2 <= card_value <= 6:
-        #     self.card_count -= 1
-        # elif card_value == 10 or card_value == 1:
-        #     self.card_count += 1
-
-        # omega II card counting
-        if card_value in [2, 3, 7]:
-            self.card_count += 1
-        elif card_value in [4, 5, 6]:
-            self.card_count += 2
-        elif card_value == 9:
-            self.card_count -= 1
-        elif card_value == 10:
-            self.card_count -= 2
-        return
 
     def distribute_winnings(self):
         # If both the player and the dealer have a tie—including
@@ -218,7 +198,7 @@ class Blackjack:
         return reward
 
     def get_obs(self):
-        return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace(), self.card_count)
+        return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace())
     
     def step(self, a):
         reward = 0
@@ -237,15 +217,44 @@ class Blackjack:
         return self.get_obs(), reward, done, {}
 
     def reset(self):
+
         self.player.reset_hand()
         self.dealer.reset_hand()
+        
+        # self.deck = []
+        # self.history = []
+        # self.player = Player(PlayerType.PERSON)
+        # self.dealer = Player(PlayerType.DEALER)
+
+        # # initialize the deck
+        # for suit in self.SUITS:
+        #     for rank in self.RANKINGS:
+        #         self.deck.append(Card(suit, rank))
+        # self.shuffle()
 
         # deal cards to player and dealer
-        self.player.hit(self.deal())
-        self.player.hit(self.deal())
+        p1 = self.deal()
+        p2 = self.deal()
+        d1 = self.deal()
+        d2 = self.deal()
+        # print("Reset called: ", p1, p2, d1, d2)
+        self.player.hit(p1)
+        self.player.hit(p2)
 
-        self.dealer.hit(self.deal())
-        self.dealer.hit(self.deal())
+        self.dealer.hit(d1)
+        self.dealer.hit(d2)
+
+        # print("Player cards:")
+        # for card in self.player.cards:
+        #     print(card.get_value())
+
+        # print("Dealer cards:")
+        # for card in self.dealer.cards:
+        #     print(card.get_value())
+        
+        # deck_print = []
+        # for card in self.deck:
+        #     deck_print.append(card.__str__())
+        # print("DECK:", deck_print, len(self.deck))
 
         return self.get_obs()
-
