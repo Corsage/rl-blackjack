@@ -4,13 +4,8 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-INITIAL_BALANCE = 1000
-NUM_DECKS = 6
 import random
 from enum import Enum
-
-# Set to True to see debug messages.
-DEBUGGING = True
 
 class Card:
     """ A basic card class for Blackjack. """
@@ -119,12 +114,10 @@ class Blackjack:
     def __init__(self, decks = 1, rounds = 1):
         self.nA = 2
         self.nS = 10*10*2
-        # self.nS = 10*10*2*3
         self.rounds = rounds
         self.decks = decks
         self.deck = []
         self.history = []
-        # self.card_count = 0
         self.player = Player(PlayerType.PERSON)
         self.dealer = Player(PlayerType.DEALER)
 
@@ -133,8 +126,6 @@ class Blackjack:
             for rank in self.RANKINGS:
                 self.deck.append(Card(suit, rank))
         self.shuffle()
-        # print(len(self.deck))
-        # self.reset()
 
     def shuffle(self):
         random.shuffle(self.deck)
@@ -142,33 +133,11 @@ class Blackjack:
     def get_history(self):
         return self.history
 
-    # def update_card_count(self, card):
-    #     value = card.get_value()
-
-    #     # hi-low card counting
-    #     # if 2 <= value <= 6: 
-    #     #     self.card_count +=1
-    #     # elif value in [1, 10]:
-    #     #     self.card_count +=1
-
-    #     # omega-II card counting
-    #     if value in [2, 3, 7]:
-    #         self.card_count += 1
-    #     elif value in [4, 5, 6]:
-    #         self.card_count += 2
-    #     elif value == 9:
-    #         self.card_count -= 1
-    #     elif value == 10:
-    #         self.card_count -= 2
-    #     return
-
-
     def deal(self):
-        # Every time we deal a card, it goes into our history.
         
         card = self.deck.pop()
+        # Every time we deal a card, it goes into our history.
         self.history.append(card)
-        # self.update_card_count(card)
 
         if not self.deck: # to implement infinite deck
             print('\n!!DECK EMPTY!!')
@@ -194,7 +163,7 @@ class Blackjack:
                 self.dealer.add_to_score(-1)
 
             elif self.player.sum_hand() == self.dealer.sum_hand():
-                reward = 0.1
+                reward = 0
                 self.player.add_to_score(0)
                 self.dealer.add_to_score(0)
 
@@ -211,7 +180,6 @@ class Blackjack:
 
     def get_obs(self):
         return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace())
-        # return (self.player.sum_hand(), self.dealer.get_cards()[0].get_value(), self.player.has_ace(), self.card_count)
     
     def step(self, a):
         reward = 0

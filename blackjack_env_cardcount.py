@@ -193,7 +193,7 @@ class Blackjack:
                 self.dealer.add_to_score(-1)
 
             elif self.player.sum_hand() == self.dealer.sum_hand():
-                reward = 0.1
+                reward = 0
                 self.player.add_to_score(0)
                 self.dealer.add_to_score(0)
 
