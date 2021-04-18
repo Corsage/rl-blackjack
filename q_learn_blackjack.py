@@ -495,12 +495,14 @@ if __name__ == "__main__":
     # with open("mc_policy.pkl", "rb") as input_file:
     #     policy = pickle.load(input_file) # load saved policy
     # print(policy)
-    
+
+    call_mc(env, policy)
+
     # with open("mc_det_policy.pkl", "wb") as output_file:
     #     pickle.dump(policy_mc, output_file)
 
-    call_mc(env, policy)
-    #call_q(env, policy)
-    #call_td(env, policy)
+    call_q(env, policy)
+    
+    call_td(env, policy)
     
     

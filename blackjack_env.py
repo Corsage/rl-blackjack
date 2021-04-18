@@ -141,6 +141,10 @@ class Blackjack:
         self.rounds = rounds
         self.decks = decks
 
+        self.deck = []
+        self.history = 0
+        self.history_dealer = 0
+
         self.reset()
     
     def add_weight(self, card, player = ''):
@@ -228,6 +232,7 @@ class Blackjack:
     
     def step(self, a):
         reward = 0
+
         if a==1: # if action == 'hit'
             self.player.hit(self.deal())
             done = self.player.did_bust()
@@ -242,19 +247,22 @@ class Blackjack:
         return self.get_obs(), reward, done, {}
 
     def reset(self):
-        
-        self.deck = []
-        self.history = 0
-        self.history_dealer = 0
         self.player = Player(PlayerType.PERSON)
         self.dealer = Player(PlayerType.DEALER)
         self.reward = 0
 
-        # initialize the deck
-        for suit in self.SUITS:
-            for rank in self.RANKINGS:
-                self.deck.append(Card(suit, rank))
-        self.shuffle()
+        # Check if the deck is 1/3 full.
+        if len(self.deck) < 17:
+            self.deck = []
+            
+            for suit in self.SUITS:
+                for rank in self.RANKINGS:
+                    self.deck.append(Card(suit, rank))
+
+            self.shuffle()
+            self.history = 0
+            self.history_dealer = 0
+
 
         # deal cards to player and dealer
         self.player.hit(self.deal())
@@ -264,4 +272,3 @@ class Blackjack:
         self.dealer.hit(self.deal())
 
         return self.get_obs()
-
