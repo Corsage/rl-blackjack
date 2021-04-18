@@ -274,6 +274,74 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
     det_policy = np.argmax(Q_value, axis=1)
     return Q_value, det_policy
 
+
+def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
+    """This function implements the temporal-difference SARSA policy iteration for finding
+    the optimal policy.
+
+    Parameters
+    ----------
+    env: given enviroment, here frozenlake
+    iterations: int
+        the number of iterations to try
+    gamma: float
+        discount factor
+    alpha: float
+        The learning rate during Q-value updates
+
+    Returns:
+    ----------
+    Q_value: np.ndarray[nS, nA]
+        The Q_value at the end of iterations
+    det_policy: np.ndarray[nS]
+        The greedy (i.e., deterministic policy)
+    """
+
+    nS = env.nS  # number of states
+    nA = env.nA  # number of actions
+    Q_value = np.zeros((nS, nA))
+    policy = np.ones((env.nS,env.nA))/env.nA
+    epsilon = 1
+    s_t1 = env.reset()  # reset the environment and place the agent in the start square
+    a_t1 = sample_action(policy, s_t1)
+    ############################
+    # YOUR IMPLEMENTATION HERE #
+    # HINT: Don't forget to decay epsilon according to GLIE
+
+    for i in range(iterations):
+    	
+        d_t1 = False
+        epsilon = 1 / (1 + 2)
+        
+        while (d_t1 == False):
+            
+            
+            s_t2, r_t1, d_t1, _ = env.step(a_t1)
+            a_t2 = sample_action(policy, s_t2)
+            
+            Q_value[s_t1, a_t1] += alpha * (r_t1 + (gamma * Q_value[s_t2, a_t2]) - Q_value[s_t1, a_t1])
+            
+            actions = Q_value[s_t1]
+            max_index = np.argwhere(actions == np.amax(actions))
+            max_list = max_index.flatten().tolist()
+            
+            policy[s_t1] = (epsilon / nA)
+            
+            for max_elem in max_list:
+                
+                policy[s_t1, max_elem] += (1-epsilon) / len(max_list)
+            
+            s_t1 = s_t2
+            a_t1 = a_t2
+    	
+        s_t1 = env.reset()
+        a_t1 = sample_action(policy, s_t1)
+        
+    ############################
+    det_policy = np.argmax(Q_value, axis=1)
+    return Q_value, det_policy
+
+
 def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=None):
     """This function implements the Q-Learning policy iteration for finding
     the optimal policy.
@@ -332,7 +400,7 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     det_policy = np.argmax(Q_value, axis=1)
     return Q_value, det_policy
 
-def test_performance(env, policy, nb_episodes=500, max_steps=500):
+def test_performance(env, policy, nb_episodes=5000, max_steps=500):
     """
       This function evaluate the success rate of the policy in reaching
       the goal.
@@ -368,12 +436,32 @@ def test_performance(env, policy, nb_episodes=500, max_steps=500):
                 else:
                     loss+=1
                 break
-    print("""\nSuccess rate over {} episodes:
-        wins = {:.2f}%\n\tdraws = {:.2f}%\n\tlosses = {:.2f}%\n
-        Average reward={:.2f}\n"""
+    print(("\nSuccess Rate Over {} Episodes:\n\n"
+           "Wins = {:.2f}%\nDraws = {:.2f}%\nLosses = {:.2f}%\n\n"
+           "Average Reward={:.2f}")
     .format(nb_episodes,win/nb_episodes*100,draw/nb_episodes*100,loss/nb_episodes*100,res_reward/nb_episodes))
 
-
+def call_mc(env, policy):
+    
+    Q_mc, policy_mc = mc_glie(env, iterations=1000, gamma=0.9, policy=policy)
+    print("Monte Carlo\n")
+    print(policy_mc)
+    test_performance(env, policy_mc)
+    
+def call_q(env, policy):
+    
+    Q_ql, policy_ql = qlearning(env, iterations=1000, gamma=0.9, alpha=0.05)
+    print("Q Learning\n")
+    print(policy_ql)
+    test_performance(env, policy_ql)
+    
+def call_td(env, policy):
+    
+    Q_td, policy_td = qlearning(env, iterations=1000, gamma=0.9, alpha=0.05)
+    print("Sarsa\n")
+    print(policy_td)
+    test_performance(env, policy_td)
+        
 if __name__ == "__main__":
     env = Blackjack()
     # env = gym.make("Blackjack-v0")
@@ -382,9 +470,18 @@ if __name__ == "__main__":
     Q_value = np.zeros((env.nS, env.nA))
     policy = np.ones((env.nS,env.nA))/env.nA
 
-    Q_ql, policy_ql = qlearning(env, iterations=10000, gamma=0.9, alpha=0.1)
-    print(policy_ql)
-    test_performance(env, policy_ql, nb_episodes=500, max_steps=500)
+    ## Monte-Carlo
+    # with open("mc_policy.pkl", "rb") as input_file:
+    #     policy = pickle.load(input_file) # load saved policy
+    # print(policy)
 
-    # https://youngho92.github.io/Fifth/
+    call_mc(env, policy)
+
+    # with open("mc_det_policy.pkl", "wb") as output_file:
+    #     pickle.dump(policy_mc, output_file)
+
+    call_q(env, policy)
+    
+    call_td(env, policy)
+    
     
