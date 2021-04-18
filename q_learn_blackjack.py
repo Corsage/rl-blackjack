@@ -420,7 +420,7 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     det_policy = np.argmax(Q_value, axis=1)
     return Q_value, det_policy
 
-def test_performance(env, policy, nb_episodes=500, max_steps=500):
+def test_performance(env, policy, nb_episodes=5000, max_steps=500):
     """
       This function evaluate the success rate of the policy in reaching
       the goal.
@@ -473,14 +473,14 @@ def call_q(env, policy):
     Q_ql, policy_ql = qlearning(env, iterations=1000, gamma=0.9, alpha=0.05)
     print("Q Learning\n")
     print(policy_ql)
-    test_performance(env, policy_ql, nb_episodes=500, max_steps=500)
+    test_performance(env, policy_ql)
     
 def call_td(env, policy):
     
     Q_td, policy_td = qlearning(env, iterations=1000, gamma=0.9, alpha=0.05)
     print("Sarsa\n")
     print(policy_td)
-    test_performance(env, policy_td, nb_episodes=500, max_steps=500)
+    test_performance(env, policy_td)
         
 if __name__ == "__main__":
     env = Blackjack()
