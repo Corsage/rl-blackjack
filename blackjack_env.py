@@ -134,7 +134,6 @@ class Blackjack:
             for rank in self.RANKINGS:
                 self.deck.append(Card(suit, rank))
         self.shuffle()
-        # print(len(self.deck))
 
         self.deck = []
         self.history = 0
@@ -250,7 +249,6 @@ class Blackjack:
         if a==1: # if action == 'hit'
             self.player.hit(self.deal())
             done = self.player.did_bust()
-            print('busted')
         else:   # action == 'stand'
             done = True
             self.player.stand()

@@ -10,7 +10,6 @@ def state_to_ind(state):
     #    - the dealer's one showing card (1-10 where 1 is ace),
     #    - and whether or not the player holds a usable ace (0 or 1).   
     # state: [(players_sum),(shown_card),(usable_ace)]
-    # print(state)
     if state[0]<=11 or state[0]>21:
         return -1
 
@@ -473,7 +472,6 @@ if __name__ == "__main__":
     ## Monte-Carlo
     # with open("mc_policy.pkl", "rb") as input_file:
     #     policy = pickle.load(input_file) # load saved policy
-    # print(policy)
 
     call_mc(env, policy)
 
