@@ -142,6 +142,19 @@ class Blackjack:
         self.decks = decks
 
         self.reset()
+    
+    def add_weight(self, card, player = ''):
+        value = card.get_value()
+        if player == 'dealer':
+            if (value > 2 and value < 7):
+                self.history_dealer += 1
+            elif (value == 1 or value == 10):
+                self.history_dealer -= 1
+        else:
+            if (value > 2 and value < 7):
+                self.history += 1
+            elif (value == 1 or value == 10):
+                self.history -= 1
 
     def shuffle(self):
         random.shuffle(self.deck)
@@ -152,33 +165,61 @@ class Blackjack:
     def deal(self):
         # Every time we deal a card, it goes into our history.
         card = self.deck.pop()
-        self.history.append(card)
+        self.add_weight(card)
         return card
+    
+    def dealer_deal(self):
+        # Same as deal except these cards would be facedown to the player.
+        card = self.deck.pop()
+        self.add_weight(card, 'dealer')
+        return card
+    
+    def reward_scaling(self):
+        
+        if self.history > 0:
+            return (self.history / (self.history + 4))
+        
+        elif self.history < 0:
+            return (-self.history / (self.history - 4))
+        
+        return 0
 
     def distribute_winnings(self):
         # If both the player and the dealer have a tie—including
         # with a blackjack—the bet is a tie or “push”.
         # If both the dealer and player bust, the player loses.
         # for player in self.players:
+        
+        scaling = self.reward_scaling()
+        
         if not(self.player.did_bust()):
-            if self.dealer.did_bust() or (self.player.sum_hand() > self.dealer.sum_hand()) :
-                reward = 1
+            
+            if self.dealer.did_bust():
+                reward = 1 + scaling
                 self.player.add_to_score(1)
                 self.dealer.add_to_score(-1)
-
+            
+            elif self.player.sum_hand() > self.dealer.sum_hand():
+                reward = 1 - scaling
+                self.player.add_to_score(1)
+                self.dealer.add_to_score(-1)
+            
             elif self.player.sum_hand() == self.dealer.sum_hand():
-                reward = 0
+                reward = 0 - (scaling / 2)
                 self.player.add_to_score(0)
                 self.dealer.add_to_score(0)
 
             else:
-                reward = -1
+                reward = -1 + scaling
                 self.player.add_to_score(-1)
                 self.dealer.add_to_score(1)
+
         else:
-            reward = -1
+            reward = -1 - scaling
             self.player.add_to_score(-1)
             self.dealer.add_to_score(1)
+        
+        self.history += self.history_dealer
         
         return reward
 
@@ -194,7 +235,7 @@ class Blackjack:
             done = True
             self.player.stand()
             while self.dealer.sum_hand() < 17:
-                self.dealer.hit(self.deal())
+                self.dealer.hit(self.dealer_deal())
 
         if done:
             reward = self.distribute_winnings()
@@ -203,7 +244,8 @@ class Blackjack:
     def reset(self):
         
         self.deck = []
-        self.history = []
+        self.history = 0
+        self.history_dealer = 0
         self.player = Player(PlayerType.PERSON)
         self.dealer = Player(PlayerType.DEALER)
         self.reward = 0
@@ -216,7 +258,7 @@ class Blackjack:
 
         # deal cards to player and dealer
         self.player.hit(self.deal())
-        self.dealer.hit(self.deal())
+        self.dealer.hit(self.dealer_deal())
         
         self.player.hit(self.deal())
         self.dealer.hit(self.deal())
