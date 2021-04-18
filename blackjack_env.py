@@ -206,6 +206,7 @@ class Blackjack:
         self.history = []
         self.player = Player(PlayerType.PERSON)
         self.dealer = Player(PlayerType.DEALER)
+        self.reward = 0
 
         # initialize the deck
         for suit in self.SUITS:
@@ -215,9 +216,9 @@ class Blackjack:
 
         # deal cards to player and dealer
         self.player.hit(self.deal())
-        self.player.hit(self.deal())
-
         self.dealer.hit(self.deal())
+        
+        self.player.hit(self.deal())
         self.dealer.hit(self.deal())
 
         return self.get_obs()
