@@ -10,23 +10,16 @@ def state_to_ind(state):
     #    - the dealer's one showing card (1-10 where 1 is ace),
     #    - and whether or not the player holds a usable ace (0 or 1).   
     # state: [(players_sum),(shown_card),(usable_ace)]
+
     if state[0]<=11 or state[0]>21:
         return -1
 
     # linear indeces in 3d array shape
-    lin_inds = np.arange(10*10*2*3).reshape([10,10,2,3])
+    lin_inds = np.arange(10*10*2).reshape([10,10,2])
     x = state[0]-12
     y = state[1]-1
-    z = 1 if state[2]==False else 0
-    # 0 - card count == 0
-    # 1 - card count is positive
-    # 2 - card count is negative
-    w = 0
-    if state[3] > 0:
-        w = 1
-    elif state[3] < 0:
-        w = 2
-    return lin_inds[x,y,z,w]
+    z = 1 if state[2]==False else 0 
+    return lin_inds[x,y,z]
 
 def sample_action(policy, state):
     
@@ -44,7 +37,6 @@ def sample_action(policy, state):
 def take_one_step(env, policy, state):
     """
     This function takes one step in the environment according to the stochastic policy.
-
     Parameters
     ----------
         env: given enviroment, here frozenlake
@@ -52,7 +44,6 @@ def take_one_step(env, policy, state):
             See the description in `sample_action`.
         state: int
             The current state where the agent is in the environment
-
     Returns
     -------
         action: int
@@ -64,7 +55,6 @@ def take_one_step(env, policy, state):
         done: boolean
             If done is `True` this indicates that we have entered a terminating state
             (i.e, `new_state` is a terminating state).
-
     """
     action = sample_action(policy, state)
     new_state, reward, done, _ = env.step(action)
@@ -75,7 +65,6 @@ def generate_episode(env, policy, max_steps=500):
     """
     Since Monte Carlo methods are based on learning from episodes write a function `random_episode`
     that generates an episode given the frozenlake environment and a policy.
-
     Parameters
     ----------
         env: given enviroment, here frozenlake
@@ -84,7 +73,6 @@ def generate_episode(env, policy, max_steps=500):
         max_steps: int
             The maximum number of steps that the episode could take. If a terminating state
             is not reached within this time, terminate the episode.
-
     Returns
     -------
         episode: list of [(state, action, reward)] triplet.
@@ -92,12 +80,9 @@ def generate_episode(env, policy, max_steps=500):
             we were in state 0 took action 1 and observed reward 0
             (it also means we transitioned to state 4). Similarly, in the
             second time step we are in state 4 took action 2 and observed reward 0.
-
     """
     episode = []
     curr_state = env.reset()  # reset the environment and place the agent in the start square
-    ############################
-    # YOUR IMPLEMENTATION HERE #
 
     steps = 0
     while True:
@@ -124,7 +109,6 @@ def generate_returns(episode, gamma=0.9):
     0 + 0.9 * 2
     And finally, in the last time step it is:
     2
-
     Parameters
     ----------
         episode: list
@@ -132,12 +116,10 @@ def generate_returns(episode, gamma=0.9):
             described above.
         gamma: float
             This is the discount factor, which is a number between 0 and 1.
-
     Returns
     -------
         epi_returns: np.ndarray[len(episode)]
             The array containing the total returns for each step of the episode.
-
     """
     len_episode = len(episode)
     epi_returns = np.zeros(len_episode)
@@ -160,7 +142,6 @@ def epsilon_greedy_policy_improve(Q_value, nS, nA, epsilon):
     """Given the Q_value function and epsilon generate a new epsilon-greedy policy.
     IF TWO ACTIONS HAVE THE SAME MAXIMUM Q VALUE, THEY MUST BOTH BE EXECUTED EQUALLY LIKELY.
     THIS IS IMPORTANT FOR EXPLORATION.
-
     Parameters
     ----------
     Q_value: np.ndarray[env.nS, env.nA]
@@ -171,7 +152,6 @@ def epsilon_greedy_policy_improve(Q_value, nS, nA, epsilon):
         number of actions
     epsilon: float
         current value of epsilon
-
     Returns
     -------
     new_policy: np.ndarray[env.nS, env.nA]
@@ -194,7 +174,6 @@ def epsilon_greedy_policy_improve(Q_value, nS, nA, epsilon):
 def mc_policy_evaluation(env, policy, Q_value, n_visits, gamma=0.9):
     """Update the current Q_values and n_visits by generating one random episode
     and using the given policy and the Monte Carlo first-visit approach.
-
     Parameters
     ----------
         env: given enviroment, here frozenlake
@@ -219,8 +198,7 @@ def mc_policy_evaluation(env, policy, Q_value, n_visits, gamma=0.9):
     episode = generate_episode(env, policy)
     returns = generate_returns(episode, gamma=gamma)
     visit_flag = np.zeros((env.nS, env.nA))
-    ############################
-    # YOUR IMPLEMENTATION HERE #
+
     for t in range(len(episode)):
         s, a, r = episode[t]
         s_ind = state_to_ind(s)
@@ -230,13 +208,11 @@ def mc_policy_evaluation(env, policy, Q_value, n_visits, gamma=0.9):
                 Q_value[s_ind,a] += 1/n_visits[s_ind,a]*(returns[t] - Q_value[s_ind,a])
                 visit_flag[s_ind,a] += 1
     
-    ############################
     return Q_value, n_visits
 
 def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
     """This function implements the first-visit Monte Carlo GLIE policy iteration for finding
     the optimal policy.
-
     Parameters
     ----------
     env: given enviroment, here frozenlake
@@ -244,7 +220,6 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
         the number of iterations to try
     gamma: float
         discount factor
-
     Returns:
     ----------
     Q_value: np.ndarray[env.nS, env.nA]
@@ -257,8 +232,7 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
     if policy is None:
         policy = np.ones((env.nS,env.nA))/env.nA  # initially all actions are equally likely
     epsilon = 1
-    ############################
-    # YOUR IMPLEMENTATION HERE #
+
     i = 0
     while True:
         Q_value, n_visits = mc_policy_evaluation(env, policy, Q_value, n_visits)
@@ -267,6 +241,9 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
         policy = epsilon_greedy_policy_improve(Q_value, env.nS, env.nA, epsilon)
 
         if i >= iterations:
+            # # save policy to continue training from this point
+            # with open("mc_policy.pkl", "wb") as output_file:
+            #     pickle.dump(policy, output_file)
             break
 
     ############################
@@ -277,7 +254,6 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
 def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
     """This function implements the temporal-difference SARSA policy iteration for finding
     the optimal policy.
-
     Parameters
     ----------
     env: given enviroment, here frozenlake
@@ -287,7 +263,6 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
         discount factor
     alpha: float
         The learning rate during Q-value updates
-
     Returns:
     ----------
     Q_value: np.ndarray[nS, nA]
@@ -301,11 +276,8 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
     Q_value = np.zeros((nS, nA))
     policy = np.ones((env.nS,env.nA))/env.nA
     epsilon = 1
-    s_t1 = env.reset()  # reset the environment and place the agent in the start square
+    s_t1 = env.reset()  # reset the environment
     a_t1 = sample_action(policy, s_t1)
-    ############################
-    # YOUR IMPLEMENTATION HERE #
-    # HINT: Don't forget to decay epsilon according to GLIE
 
     for i in range(iterations):
     	
@@ -336,7 +308,6 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
         s_t1 = env.reset()
         a_t1 = sample_action(policy, s_t1)
         
-    ############################
     det_policy = np.argmax(Q_value, axis=1)
     return Q_value, det_policy
 
@@ -344,7 +315,6 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
 def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=None):
     """This function implements the Q-Learning policy iteration for finding
     the optimal policy.
-
     Parameters
     ----------
     env: given enviroment, here frozenlake
@@ -354,7 +324,6 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
         discount factor
     alpha: float
         The learning rate during Q-value updates
-
     Returns:
     ----------
     Q_value: np.ndarray[env.nS, env.nA]
@@ -362,12 +331,13 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     det_policy: np.ndarray[env.nS]
         The greedy (i.e., deterministic policy)
     """
+
     if Q_value is None:
         Q_value = np.zeros((env.nS, env.nA))
     if policy is None:
         policy = np.ones((env.nS,env.nA))/env.nA
     epsilon = 1
-    s_t1 = env.reset()  # reset the environment and place the agent in the start square
+    s_t1 = env.reset()  # reset the environment
     s_t1_ind = state_to_ind(s_t1)
 
     i = 0
@@ -387,15 +357,17 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
         s_t1_ind = s_t2_ind
 
         if done: # if episode ends update Q and reset our agent
-            s_t2, r_t1, done, _ = env.step(a_t1)
-            Q_value[s_t1_ind, a_t1] += alpha*(r_t1 + gamma*np.max(Q_value[s_t2_ind]) - Q_value[s_t1_ind, a_t1])
             s_t1 = env.reset()
             s_t1_ind = state_to_ind(s_t1)
      
         if i >= iterations:
+            # # save policy to continue training from this point
+            # with open("qlearn_policy.pkl", "wb") as output_file:
+            #     pickle.dump(policy, output_file)
+            # with open("qlearn_qvalue.pkl", "wb") as output_file:
+            #     pickle.dump(Q_value, output_file)
             break
     
-    ############################
     det_policy = np.argmax(Q_value, axis=1)
     return Q_value, det_policy
 
@@ -403,7 +375,6 @@ def test_performance(env, policy, nb_episodes=5000, max_steps=500):
     """
       This function evaluate the success rate of the policy in reaching
       the goal.
-
       Parameters
       ----------
       env: gym.core.Environment
@@ -472,14 +443,13 @@ if __name__ == "__main__":
     ## Monte-Carlo
     # with open("mc_policy.pkl", "rb") as input_file:
     #     policy = pickle.load(input_file) # load saved policy
+    # print(policy)
 
-    call_mc(env, policy)
+    # call_mc(env, policy)
 
     # with open("mc_det_policy.pkl", "wb") as output_file:
     #     pickle.dump(policy_mc, output_file)
 
-    call_q(env, policy)
+    # call_q(env, policy)
     
-    call_td(env, policy)
-    
-    
+    # call_td(env, policy)
