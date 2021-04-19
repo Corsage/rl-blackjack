@@ -339,7 +339,7 @@ class Bet:
 
     def __init__(self):
         self.nA = 3
-        self.nS = 7
+        self.nS = 41
         self.blackjack = Blackjack()
         
         # Load in our best policy to simulate the game
@@ -349,11 +349,11 @@ class Bet:
         
     def get_obs(self):
         
-        return (self.blackjack.get_weight())
+        return (self.blackjack.get_history())
     
     def state_to_ind(self, state):
         
-        return (state + 3)
+        return (state + 20)
     
     def step(self, a, max_steps = 500):
         # Simulate one hand of blackjack and give the reward multiplied by the
@@ -372,7 +372,7 @@ class Bet:
                 
                 reward *= (a + 1)
                 break
-            
+
         return self.get_obs(), reward, done, {}
 
     def reset(self):
