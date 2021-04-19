@@ -1,13 +1,15 @@
 import gym
 import numpy as np
-from betting_env import *
+from betting_env import BlackjackBetting
 
 import pickle  # -- to save/load trained policy
 
 def sample_action(policy, state):
     all_actions = np.arange(env.nA)
-    return np.random.choice(all_actions, p=policy[state])
+    return np.random.choice(all_actions, p=policy[state_to_ind(state)])
 
+def state_to_ind(state):
+    return (state+20)
 
 def epsilon_greedy_policy_improve(Q_value, nS, nA, epsilon):
     """Given the Q_value function and epsilon generate a new epsilon-greedy policy.
@@ -69,25 +71,25 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     epsilon = 1
     # s_t1 = env.reset()  # reset the environment
     s_t1 = 0
+    s_t1_ind = state_to_ind(s_t1)
 
     i = 0
     while True:
-        print('Iteration: ', i)
         a_t1 = sample_action(policy, s_t1)
-        # print('Action: ', a_t1)
-        print(env.player.balance)
         s_t2, r_t1, done, _ = env.step(a_t1)
-        print(env.player.balance)
-        Q_value[s_t1, a_t1] += alpha*(r_t1 + gamma*np.max(Q_value[s_t2]) - Q_value[s_t1, a_t1])
+        s_t2_ind = state_to_ind(s_t2)
+        Q_value[s_t1_ind, a_t1] += alpha*(r_t1 + gamma*np.max(Q_value[s_t2_ind]) - Q_value[s_t1_ind, a_t1])
         
         i += 1
         epsilon = epsilon/i
         policy = epsilon_greedy_policy_improve(Q_value, env.nS, env.nA, epsilon)
         
         s_t1 = s_t2
+        s_t1_ind = s_t2_ind
 
         if done: # if episode ends update Q and reset our agent
             s_t1 = env.reset()
+            s_t1_ind = state_to_ind(s_t1)
      
         if i >= iterations:
             # save policy to continue training from this point
@@ -138,12 +140,12 @@ def test_performance(env, policy, nb_episodes=1000, max_steps=10):
     print(("\nSuccess Rate Over {} Episodes:\n\n"
            "Average balance={:.2f}\n"
            "Average Reward={:.2f}\n"
-           "Average wins={:.2f}\n")
+           "Average wins={:.2f}%\n")
     .format(nb_episodes,balance/nb_episodes,res_reward/nb_episodes, wins/nb_episodes*100))
 
-def call_q(env, policy):
+def call_q(env):
     
-    Q_ql, policy_ql = qlearning(env, iterations=10000, gamma=0.8, alpha=0.05)
+    Q_ql, policy_ql = qlearning(env, iterations=1000, gamma=0.9, alpha=0.01)
     print("Q Learning\n")
     print(policy_ql)
     test_performance(env, policy_ql)
@@ -151,22 +153,12 @@ def call_q(env, policy):
         
 if __name__ == "__main__":
     env = BlackjackBetting()
-    # env = gym.make("Blackjack-v0")
-    nS = env.nS  # number of states for policy improvement
-    nA = env.nA  # number of actions: hit or stand
-    Q_value = np.zeros((env.nS, env.nA))
-    policy = np.ones((env.nS,env.nA))/env.nA
 
-    ## Monte-Carlo
-    # with open("mc_policy.pkl", "rb") as input_file:
-    #     policy = pickle.load(input_file) # load saved policy
-    # print(policy)
+    print("\nBetting lowest:\n")
+    bet_lowest_policy = np.repeat(np.array([0]), repeats=41, axis=0)
+    print(bet_lowest_policy) 
+    test_performance(env, bet_lowest_policy)
 
-    # call_mc(env, policy)
-
-    # with open("mc_det_policy.pkl", "wb") as output_file:
-    #     pickle.dump(policy_mc, output_file)
-
-    call_q(env, policy)
+    print("\nOptimal policy:\n")
+    call_q(env)
     
-    # call_td(env, policy)

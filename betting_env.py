@@ -173,7 +173,6 @@ class BlackjackBetting:
             self.deck = []
             self.end_episode = True
             self.player.balance = INITIAL_BALANCE
-            print('end of episode')
             
             for suit in self.SUITS:
                 for rank in self.RANKINGS:
