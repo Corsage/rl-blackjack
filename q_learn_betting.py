@@ -2,15 +2,6 @@ import numpy as np
 from blackjack_env import *
 
 def sample_action(policy, state):
-    
-    current_sum = state[0]
-
-    # if our sum is <= 11, always hit
-    # since we cannot exceed 21
-    if current_sum <= 11:
-        return 1
-
-    # else pick at random
     all_actions = np.arange(env.nA)
     return np.random.choice(all_actions, p=policy[env.state_to_ind(state)])
 
@@ -84,16 +75,7 @@ def generate_episode(env, policy, max_steps=500):
 def generate_returns(episode, gamma=0.9):
     """
     Given an episode, generate the total return from each step in the episode based on the
-    discount factor gamma. For example, let the episode be:
-    [(0,1,1),(4,2,-1),(6,3,0),(8,0,2)]
-    and gamma=0.9. Then the total return in the first time step is:
-    1 + 0.9 * -1 + 0.9^2 * 0 + 0.9^3 * 2
-    In the second time step it is:
-    -1 + 0.9 * 0 + 0.9^2 * 2
-    In the third time step it is:
-    0 + 0.9 * 2
-    And finally, in the last time step it is:
-    2
+    discount factor gamma.
 
     Parameters
     ----------
@@ -116,6 +98,7 @@ def generate_returns(episode, gamma=0.9):
     gammas = [gamma**i for i in range(len_episode)]
     for i in range(len_episode):
         epi_returns[i] = np.dot(immediate_return[i:], gammas[:len_episode-i])
+
 
     return epi_returns
 
@@ -217,8 +200,11 @@ def mc_glie(env, iterations=1000, gamma=0.9, policy=None):
     if policy is None:
         policy = np.ones((env.nS,env.nA))/env.nA  # initially all actions are equally likely
     epsilon = 1
+    
     i = 0
     while True:
+        if (i % 40000 == 0):
+            print('mc', i)
         Q_value, n_visits = mc_policy_evaluation(env, policy, Q_value, n_visits)
         i += 1
         epsilon = epsilon/i
@@ -253,6 +239,8 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
         The greedy (i.e., deterministic policy)
     """
 
+    # states: [weight]
+    # [(-3 .. 3)]
     nS = env.nS  # number of states
     nA = env.nA  # number of actions
     Q_value = np.zeros((nS, nA))
@@ -263,6 +251,8 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
     s_t1_ind = env.state_to_ind(s_t1)
 
     for i in range(iterations):
+        if (i%400000 == 0):
+            print('td', i)
     	
         d_t1 = False
         epsilon = 1 / (1 + 2)
@@ -272,9 +262,6 @@ def td_sarsa(env, iterations=1000, gamma=0.9, alpha=0.1):
             
             s_t2, r_t1, d_t1, _ = env.step(a_t1)
             a_t2 = sample_action(policy, s_t2)
-            
-            if s_t2[0]<=11:
-                continue
             
             s_t2_ind = env.state_to_ind(s_t2)
             
@@ -323,8 +310,8 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     det_policy: np.ndarray[env.nS]
         The greedy (i.e., deterministic policy)
     """
-    # states: [(player_sum, shown_card, usable_ace, history)]
-    # [(12-21),(1-10),(True,False), (-20 .. 20)]
+    # states: [weight]
+    # [(-3 .. 3)]
     if Q_value is None:
         Q_value = np.zeros((env.nS, env.nA))
     if policy is None:
@@ -334,6 +321,8 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
     s_t1_ind = env.state_to_ind(s_t1)
 
     for i in range(iterations):
+        if (i%400000 == 0):
+            print('ql', i)
     	
         d_t1 = False
         epsilon = 1 / (1 + 2)
@@ -342,9 +331,6 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
             
             a_t1 = sample_action(policy, s_t1)
             s_t2, r_t1, d_t1, _ = env.step(a_t1)
-            
-            if s_t2[0]<=11:
-                continue
             
             s_t2_ind = env.state_to_ind(s_t2)
             
@@ -368,10 +354,11 @@ def qlearning(env, iterations=1000, gamma=0.9, alpha=0.1, policy=None, Q_value=N
         s_t1 = env.reset()
         s_t1_ind = env.state_to_ind(s_t1)
     
+    ############################
     det_policy = np.argmax(Q_value, axis=1)
     return Q_value, det_policy
 
-def test_performance(env, policy, nb_episodes=750000, max_steps=500):
+def test_performance(env, policy, nb_episodes=1000000, max_steps=500):
     """
       This function evaluate the success rate of the policy in reaching
       the goal.
@@ -393,11 +380,10 @@ def test_performance(env, policy, nb_episodes=750000, max_steps=500):
     loss = 0
     res_reward=0
     for i in range(nb_episodes):
-        
         state = env.reset()
         done = False
         for j in range(max_steps):
-            action = 1 if state[0]<=11 else policy[env.state_to_ind(state)]
+            action = policy[env.state_to_ind(state)]
             state, reward, done, _ = env.step(action)
             if done:
                 res_reward+=reward
@@ -410,15 +396,15 @@ def test_performance(env, policy, nb_episodes=750000, max_steps=500):
                 break
     print(("\nSuccess Rate Over {} Episodes:\n\n"
            "Wins = {:.2f}%\nDraws = {:.2f}%\nLosses = {:.2f}%\n\n"
-           "Average Reward={:.2f}")
-    .format(nb_episodes,win/nb_episodes*100,draw/nb_episodes*100,loss/nb_episodes*100,res_reward/nb_episodes))
+           "Average Reward={:.2f}\nTotal Reward = {:.2f}")
+    .format(nb_episodes,win/nb_episodes*100,draw/nb_episodes*100,loss/nb_episodes*100,res_reward/nb_episodes,res_reward))
 
 def call_mc(env, policy):
     
     # Helper function for the Monte Carlo model
     
-    Q_mc, policy_mc = mc_glie(env, iterations=100000, gamma=0.9, policy=policy)
-    #np.savetxt('history_t/mc_1p5_2_3_1_1_100000.txt', policy_mc)
+    Q_mc, policy_mc = mc_glie(env, iterations=400000, gamma=0.9, policy=policy)
+    #np.savetxt('bet_t/mc_400000_w.txt', policy_mc)
     print("Monte Carlo\n")
     test_performance(env, policy_mc)
     
@@ -426,35 +412,34 @@ def call_ql(env, policy):
     
     # Helper function for the Q Learning model
     
-    Q_ql, policy_ql = qlearning(env, iterations=1000000, gamma=0.9, alpha=0.05)
-    #np.savetxt('weight_t/ql_1p5_2_3_1_1_1mil_t.txt', policy_ql)
+    Q_ql, policy_ql = qlearning(env, iterations=2000000, gamma=0.9, alpha=0.05)
+    #np.savetxt('bet_t/ql_2m_w.txt', policy_ql)
     print("Q Learning\n")
     test_performance(env, policy_ql)
     
 def call_td(env, policy):
-    
+
     # Helper function for the TD model
     
-    Q_td, policy_td = td_sarsa(env, iterations=1000000, gamma=0.9, alpha=0.05)
-    #np.savetxt('weight_t/td_1p5_2_3_1_1_1mil_t.txt', policy_td)
+    Q_td, policy_td = td_sarsa(env, iterations=2000000, gamma=0.9, alpha=0.05)
+    #np.savetxt('bet_t/td_2m_w.txt', policy_td)
     print("Sarsa\n")
     test_performance(env, policy_td)
         
 if __name__ == "__main__":
-    env = Blackjack()
-    # env = gym.make("Blackjack-v0")
+    
+    env = Bet()
     nS = env.nS  # number of states for policy improvement
-    nA = env.nA  # number of actions: hit or stand
+    nA = env.nA  # number of actions: Bet 0, 1, or 2 (reward will add 1 to action)
     Q_value = np.zeros((env.nS, env.nA))
     policy = np.ones((env.nS,env.nA))/env.nA
     
     call_mc(env, policy)
-
+    
     call_ql(env, policy)
     
     call_td(env, policy)
+        
     
-    #policy = np.loadtxt('history_t/td_1p5_2_3_1_1_1mil.txt')
-    #test_performance(env, policy_)
     
     
