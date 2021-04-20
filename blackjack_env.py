@@ -211,32 +211,32 @@ class Blackjack:
         if not(self.player.did_bust()):
             
             if self.dealer.did_bust():
-                reward = 1 + scaling/1.5
-                #reward = 1
+                #reward = 1 + scaling/1.5
+                reward = 1
                 self.player.add_to_score(1)
                 self.dealer.add_to_score(-1)
             
             elif self.player.sum_hand() > self.dealer.sum_hand():
-                reward = 1 - scaling/2
-                #reward = 1
+                #reward = 1 - scaling/2
+                reward = 1
                 self.player.add_to_score(1)
                 self.dealer.add_to_score(-1)
             
             elif self.player.sum_hand() == self.dealer.sum_hand():
-                reward = 0 - scaling/3
-                #reward = 0
+                #reward = 0 - scaling/3
+                reward = 0
                 self.player.add_to_score(0)
                 self.dealer.add_to_score(0)
 
             else:
-                reward = -1 + scaling
-                #reward = -1
+                #reward = -1 + scaling
+                reward = -1
                 self.player.add_to_score(-1)
                 self.dealer.add_to_score(1)
 
         else:
-            reward = -1 - scaling
-            #reward = -1
+            #reward = -1 - scaling
+            reward = -1
             self.player.add_to_score(-1)
             self.dealer.add_to_score(1)
         
